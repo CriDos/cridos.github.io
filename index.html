@@ -4,10 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Викторина 1.0.0</title>
+  <title>Викторина</title>
   <style>
     body {
-      background-color: #94b5ae;
+      background-color: #8aa2af;
     }
 
     .correct-answer {
@@ -40,19 +40,46 @@
 
 <body>
 
+  <div id="controls">
+    <button id="reload-button">Новые вопросы</button>
+    <label for="question-count">Количество вопросов:</label>
+    <select id="question-count">
+      <option value="5">5</option>
+      <option value="10">10</option>
+      <option value="20">20</option>
+      <option value="55">55</option>
+      <option value="all">Все</option>
+    </select>
+    <button id="apply-count">Применить</button>
+  </div>
   <div id="question-container"></div>
   <button id="check-button">Проверить</button>
-  <button id="reload-button">Новые вопросы</button>
   <div id="result"></div>
 
   <script>
+    let allQuestions = [];
+
     function loadQuestions() {
       fetch('SimpleQuestions.json')
         .then(response => response.json())
         .then(data => {
-          displayQuestions(data.sort(() => 0.5 - Math.random()).slice(0, 55));
+          allQuestions = data;
+          displayQuestions(getRandomQuestions(allQuestions, getSelectedCount()));
         })
         .catch(error => console.error('Ошибка при загрузке вопросов:', error));
+    }
+
+    function getRandomQuestions(questions, count) {
+      if (count === 'all') {
+        return questions.sort(() => 0.5 - Math.random());
+      } else {
+        return questions.sort(() => 0.5 - Math.random()).slice(0, count);
+      }
+    }
+
+    function getSelectedCount() {
+      const select = document.getElementById('question-count');
+      return select.value === 'all' ? 'all' : parseInt(select.value, 10);
     }
 
     function displayQuestions(questions) {
@@ -120,16 +147,20 @@
       const resultText = `Правильных ответов: ${correctCount}, неправильных ответов: ${incorrectCount}`;
       document.getElementById('result').textContent = resultText;
 
-      // Выводим сообщение с результатом
       if (correctCount > incorrectCount) {
-        alert("Поздравляем! Вы ответили на все вопросы правильно. " + resultText);
+        alert("Поздравляем! Вы ответили на все вопросов правильно. " + resultText);
       } else {
         alert("Печаль! Вы ответили на многие вопросы неправильно. " + resultText);
       }
     }
 
-    document.getElementById('check-button').addEventListener('click', checkAnswers);
-    document.getElementById('reload-button').addEventListener('click', () => window.location.reload());
+    document.getElementById('reload-button').addEventListener('click', () => {
+      displayQuestions(getRandomQuestions(allQuestions, getSelectedCount()));
+    });
+
+    document.getElementById('apply-count').addEventListener('click', () => {
+      displayQuestions(getRandomQuestions(allQuestions, getSelectedCount()));
+    });
 
     window.addEventListener('load', loadQuestions);
   </script>
