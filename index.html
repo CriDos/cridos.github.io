@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Викторина 1.0.0</title>
+  <style>
+    body {
+      background-color: #94b5ae;
+    }
+
+    .correct-answer {
+      background-color: lightgreen;
+    }
+
+    .incorrect-answer {
+      background-color: lightcoral;
+    }
+
+    .correct-block {
+      background-color: #d4edda;
+    }
+
+    .incorrect-block {
+      background-color: #f8d7da;
+    }
+
+    .question-block {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .question-text {
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="question-container"></div>
+  <button id="check-button">Проверить</button>
+  <button id="reload-button">Новые вопросы</button>
+  <div id="result"></div>
+
+  <script>
+    function loadQuestions() {
+      fetch('SimpleQuestions.json')
+        .then(response => response.json())
+        .then(data => {
+          displayQuestions(data.sort(() => 0.5 - Math.random()).slice(0, 55));
+        })
+        .catch(error => console.error('Ошибка при загрузке вопросов:', error));
+    }
+
+    function displayQuestions(questions) {
+      const questionContainer = document.getElementById('question-container');
+      questionContainer.innerHTML = questions.map((question, index) => {
+        const inputType = question.Answer.Value.length > 1 ? 'checkbox' : 'radio';
+        return `
+      <div class="question-block" data-question='${JSON.stringify(question)}'>
+        <p class="question-text">${question.Text}</p>
+        <ul>
+          ${question.Options.map((option, idx) => `
+            <li>
+              <label>
+                <input type="${inputType}" name="answer-${index}" value="${idx + 1}">
+                ${option}
+              </label>
+            </li>
+          `).join('')}
+        </ul>
+      </div>
+    `;
+      }).join('');
+    }
+
+    function clearStyles() {
+      document.querySelectorAll('.question-block').forEach(block => {
+        block.classList.remove('correct-block', 'incorrect-block');
+      });
+      document.querySelectorAll('label').forEach(label => {
+        label.classList.remove('correct-answer', 'incorrect-answer');
+      });
+    }
+
+    function checkAnswers() {
+      clearStyles();
+      let correctCount = 0;
+      let incorrectCount = 0;
+      const questions = document.querySelectorAll('.question-block');
+
+      questions.forEach((questionBlock, index) => {
+        const question = JSON.parse(questionBlock.getAttribute('data-question'));
+        const inputs = questionBlock.querySelectorAll(`input[name="answer-${index}"]`);
+        const selectedValues = Array.from(inputs).filter(input => input.checked).map(input => parseInt(input.value, 10));
+        const correctAnswers = question.Answer.Value;
+        const isCorrect = correctAnswers.every(val => selectedValues.includes(val)) && selectedValues.every(val => correctAnswers.includes(val));
+
+        if (isCorrect) {
+          questionBlock.classList.add('correct-block');
+          correctCount++;
+        } else {
+          questionBlock.classList.add('incorrect-block');
+          incorrectCount++;
+        }
+
+        inputs.forEach((input) => {
+          const answerValue = parseInt(input.value, 10);
+          if (correctAnswers.includes(answerValue)) {
+            input.parentElement.classList.add('correct-answer');
+          } else if (input.checked) {
+            input.parentElement.classList.add('incorrect-answer');
+          }
+        });
+      });
+
+      const resultText = `Правильных ответов: ${correctCount}, неправильных ответов: ${incorrectCount}`;
+      document.getElementById('result').textContent = resultText;
+
+      // Выводим сообщение с результатом
+      if (correctCount > incorrectCount) {
+        alert("Поздравляем! Вы ответили на все вопросы правильно. " + resultText);
+      } else {
+        alert("Печаль! Вы ответили на многие вопросы неправильно. " + resultText);
+      }
+    }
+
+    document.getElementById('check-button').addEventListener('click', checkAnswers);
+    document.getElementById('reload-button').addEventListener('click', () => window.location.reload());
+
+    window.addEventListener('load', loadQuestions);
+  </script>
+
+</body>
+
+</html>
