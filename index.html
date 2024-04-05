@@ -93,8 +93,10 @@
     }
 
     function getSelectedCount() {
-      const select = document.getElementById('question-count');
-      return select ? (select.value === 'all' ? allQuestions.length : parseInt(select.value, 10)) : 55;
+      const topSelect = document.getElementById('question-count-top');
+      const bottomSelect = document.getElementById('question-count-bottom');
+      const selectedValue = topSelect ? topSelect.value : (bottomSelect ? bottomSelect.value : '55');
+      return selectedValue === 'all' ? allQuestions.length : parseInt(selectedValue, 10);
     }
 
     function displayQuestions(questions) {
