@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Викторина 1.1.2</title>
+  <title>Викторина 1.2.0</title>
   <style>
     body {
       background-color: #94b5ae;
@@ -41,26 +41,29 @@
 <body>
 
   <div id="controls-top">
-    <label for="question-count-top">Количество вопросов:</label>
-    <select id="question-count-top">
+    <label for="question-count">Вопросов:</label>
+    <select id="question-count">
       <option value="30">30</option>
       <option value="55" selected>55</option>
       <option value="all">Все</option>
     </select>
-    <button id="reload-button-top">Новые вопросы</button>
+    <label for="authors-only">
+      <input type="checkbox" id="authors-only"> Только авторы
+    </label>
+    <button id="reload-button">Перезагрузить</button>
+
+    <span style="margin-left: 20px;"></span>
+    <button id="down-button">Вниз</button>
   </div>
+
   <div id="question-container"></div>
-  <button id="check-button">Проверить</button>
-  <div id="result"></div>
 
   <div id="controls-bottom">
-    <label for="question-count-bottom">Количество вопросов:</label>
-    <select id="question-count-bottom">
-      <option value="30">30</option>
-      <option value="55" selected>55</option>
-      <option value="all">Все</option>
-    </select>
-    <button id="reload-button-bottom">Новые вопросы</button>
+    <button id="check-button">Проверить</button>
+
+    <span style="margin-left: 20px;"></span>
+    <button id="up-button">Вверх</button>
+    <div id="result"></div>
   </div>
 
   <script>
@@ -84,18 +87,23 @@
       });
     }
 
-    function getRandomQuestions(questions, count) {
+    function getRandomQuestions(questions, count, authorsOnly) {
+      const filteredQuestions = authorsOnly ? questions.filter(q => q.Type === 1) : questions;
       if (count === 'all') {
-        return questions.sort(() => 0.5 - Math.random());
+        return filteredQuestions.sort(() => 0.5 - Math.random());
       } else {
-        return questions.sort(() => 0.5 - Math.random()).slice(0, count);
+        return filteredQuestions.sort(() => 0.5 - Math.random()).slice(0, count);
       }
     }
 
+    function getAuthorsOnly() {
+      const topCheckbox = document.getElementById('authors-only');
+      return topCheckbox.checked;
+    }
+
     function getSelectedCount() {
-      const topSelect = document.getElementById('question-count-top');
-      const bottomSelect = document.getElementById('question-count-bottom');
-      const selectedValue = topSelect ? topSelect.value : (bottomSelect ? bottomSelect.value : '55');
+      const topSelect = document.getElementById('question-count');
+      const selectedValue = topSelect ? topSelect.value : '55';
       return selectedValue === 'all' ? allQuestions.length : parseInt(selectedValue, 10);
     }
 
@@ -132,6 +140,7 @@
 
     function checkAnswers() {
       clearStyles();
+
       let correctCount = 0;
       let incorrectCount = 0;
       const questions = document.querySelectorAll('.question-block');
@@ -165,14 +174,11 @@
       document.getElementById('result').textContent = resultText;
 
       const totalQuestions = questions.length;
-      const minCorrectAnswers = 30;
 
       if (correctCount === totalQuestions) {
         alert("Поздравляем! Вы ответили правильно на все вопросы! Вы настоящий эксперт!");
-      } else if (correctCount >= minCorrectAnswers) {
-        alert(`Отличный результат! Вы ответили правильно на ${correctCount} вопросов из ${totalQuestions} (минимум ${minCorrectAnswers}). Продолжайте в том же духе!`);
       } else {
-        alert(`Вы ответили правильно на ${correctCount} вопросов из ${totalQuestions} (минимум ${minCorrectAnswers}). Не расстраивайтесь, у вас все получится! Попробуйте еще раз.`);
+        alert(`Вы ответили правильно на ${correctCount} вопросов из ${totalQuestions}.`);
       }
 
       window.scrollTo({
@@ -182,7 +188,7 @@
     }
 
     function reloadQuestions() {
-      displayQuestions(getRandomQuestions(allQuestions, getSelectedCount()));
+      displayQuestions(getRandomQuestions(allQuestions, getSelectedCount(), getAuthorsOnly()));
       updateAllQuestionsCount();
       document.getElementById('result').textContent = '';
       window.scrollTo({
@@ -191,28 +197,27 @@
       });
     }
 
-    function syncQuestionCount(event) {
-      const topSelect = document.getElementById('question-count-top');
-      const bottomSelect = document.getElementById('question-count-bottom');
-
-      if (event.target === topSelect) {
-        bottomSelect.value = topSelect.value;
-      } else if (event.target === bottomSelect) {
-        topSelect.value = bottomSelect.value;
-      }
-    }
-
     document.addEventListener('DOMContentLoaded', function () {
       loadQuestions();
+
       document.getElementById('check-button').addEventListener('click', checkAnswers);
-      document.getElementById('reload-button-top').addEventListener('click', reloadQuestions);
-      document.getElementById('reload-button-bottom').addEventListener('click', reloadQuestions);
-      document.getElementById('question-count-top').addEventListener('change', function (event) {
-        syncQuestionCount(event);
+      document.getElementById('reload-button').addEventListener('click', reloadQuestions);
+      document.getElementById('check-button').addEventListener('click', checkAnswers);
+
+      document.getElementById('down-button').addEventListener('click', function () {
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: 'smooth'
+        });
       });
-      document.getElementById('question-count-bottom').addEventListener('change', function (event) {
-        syncQuestionCount(event);
+
+      document.getElementById('up-button').addEventListener('click', function () {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
       });
+
     });
   </script>
 
